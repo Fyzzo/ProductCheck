@@ -24,27 +24,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'L\'URL doit commencer par http:// ou https://' }, { status: 400 });
     }
 
-    // Step 1: Scrape product page
+    // Step 1: Scrape product page (best effort — fallback to URL-based extraction)
     let product;
     try {
       product = await scrapeProduct(url);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur inconnue';
       return NextResponse.json(
-        { error: `Impossible d'accéder à la page produit : ${msg}` },
+        { error: msg },
         { status: 502 }
       );
     }
 
-    if (!product.title) {
-      return NextResponse.json(
-        { error: 'Aucune information produit trouvée sur cette page' },
-        { status: 422 }
-      );
-    }
-
-    // Step 2: Search for reviews (parallel, don't fail if some sources fail)
-    const reviews = await searchReviews(product.title);
+    // Step 2: Search for reviews using title OR raw URL as query
+    const searchQuery = product.title || new URL(url).hostname;
+    const reviews = await searchReviews(searchQuery);
 
     // Step 3: AI analysis with Gemini
     let analysis;
