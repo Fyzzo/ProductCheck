@@ -102,21 +102,40 @@ export default function Home() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-12 space-y-8">
+        {/* Hero */}
+        <div className="text-center space-y-4 pt-4">
+          <h2 className="text-4xl font-bold tracking-tight leading-tight">
+            Achetez malin.<br />Lisez les vrais avis.
+          </h2>
+          <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
+            ProductCheck analyse des dizaines d&apos;avis à travers le web et vous donne
+            un verdict clair en quelques secondes — sans pub, sans parti pris.
+          </p>
+          <ul className="inline-flex flex-col items-start gap-2 text-sm text-gray-300 mt-2">
+            <li className="flex items-center gap-2">
+              <span className="text-green-400 font-bold">✓</span>
+              Avis agrégés depuis Google, Trustpilot et Amazon — plus de sources = plus de fiabilité
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-400 font-bold">✓</span>
+              Résumé IA instantané : points forts, défauts et score sur 10
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-400 font-bold">✓</span>
+              100% gratuit, aucune inscription requise
+            </li>
+          </ul>
+        </div>
+
         {/* URL Input */}
         <div className="space-y-3">
-          <h2 className="text-2xl font-semibold text-center">
-            Collez le lien d&apos;un produit
-          </h2>
-          <p className="text-gray-400 text-center text-sm">
-            Amazon, Fnac, Darty, Cdiscount, ou tout autre site e-commerce
-          </p>
           <div className="flex gap-2">
             <input
               type="url"
               value={url}
               onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !isLoading && handleAnalyze()}
-              placeholder="https://www.amazon.fr/dp/..."
+              placeholder="Collez le lien du produit (Amazon, Fnac, Darty...)"
               disabled={isLoading}
               className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
             />
@@ -125,10 +144,42 @@ export default function Home() {
               disabled={isLoading || !url.trim()}
               className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl transition-colors whitespace-nowrap"
             >
-              {isLoading ? 'Analyse...' : 'Analyser'}
+              {isLoading ? 'Analyse...' : 'Analyser ce produit'}
             </button>
           </div>
         </div>
+
+        {/* Comment ça marche */}
+        {status === 'idle' && (
+          <div className="border border-gray-800 rounded-2xl p-6">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-5 text-center">
+              Comment ça marche
+            </h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="space-y-2">
+                <div className="text-3xl">🔗</div>
+                <p className="text-sm font-semibold text-white">Copiez le lien</p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Trouvez le produit sur n&apos;importe quel site e-commerce et copiez son URL
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-3xl">🔍</div>
+                <p className="text-sm font-semibold text-white">On analyse</p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Notre IA parcourt le web pour collecter et synthétiser les avis
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-3xl">✅</div>
+                <p className="text-sm font-semibold text-white">Décidez en confiance</p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Lisez le verdict : score, avantages, inconvénients, recommandation
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading Steps */}
         {isLoading && (
