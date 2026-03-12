@@ -27,26 +27,31 @@ export async function analyzeProduct(
     .map(r => `- [${r.source}] Note: ${r.rating ?? 'N/A'}/5 | ${r.snippet}`)
     .join('\n');
 
-  const prompt = `Tu es un expert en analyse de produits et d'avis consommateurs. Analyse ce produit et ses avis.
+  const hasLimitedData = !product.description && !product.rawText;
 
-## Informations du produit
-- Titre : ${product.title}
-- Marque : ${product.brand || 'Inconnue'}
+  const prompt = `Tu es un expert en analyse de produits et d'avis consommateurs.
+${hasLimitedData ? "IMPORTANT : Le site a bloqué le scraping. Identifie le produit à partir de l'URL et de tes connaissances, puis analyse-le." : ''}
+
+## Informations du produit (extraites automatiquement)
+- Titre extrait : ${product.title || 'Non disponible'}
+- Marque : ${product.brand || 'À identifier depuis l\'URL'}
 - Prix : ${product.price || 'Non renseigné'}
-- Description : ${product.description}
-- URL : ${product.url}
-- Texte de la page : ${product.rawText.substring(0, 1500)}
+- Description : ${product.description || 'Non disponible'}
+- URL du produit : ${product.url}
+- Texte de la page : ${product.rawText ? product.rawText.substring(0, 1500) : 'Non disponible (site bloqué)'}
 
 ## Avis trouvés sur le web
 ${reviewsText || 'Aucun avis trouvé.'}
 
 ## Instructions
-Réponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) dans ce format exact :
+Identifie le produit à partir de toutes les informations disponibles (URL, titre, avis web).
+Si le scraping a échoué, utilise tes connaissances sur ce produit pour compléter l'analyse.
+Réponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) :
 {
   "productName": "Nom complet et précis du produit",
   "brand": "Marque du produit",
-  "category": "Catégorie du produit (ex: Smartphone, Casque audio, Machine à café...)",
-  "summary": "Résumé objectif de 3-4 phrases sur le produit et l'opinion générale des utilisateurs",
+  "category": "Catégorie (ex: Smartphone, Casque audio, Machine à café...)",
+  "summary": "Résumé objectif de 3-4 phrases sur le produit et l'opinion générale",
   "pros": ["Point positif 1", "Point positif 2", "Point positif 3"],
   "cons": ["Point négatif 1", "Point négatif 2", "Point négatif 3"],
   "globalScore": 7.5,
@@ -55,10 +60,9 @@ Réponds UNIQUEMENT avec un JSON valide (sans markdown, sans backticks) dans ce 
 }
 
 Règles :
-- globalScore est un nombre décimal entre 0 et 10
-- confidence est "haute", "moyenne" ou "faible" selon la quantité d'avis disponibles
-- Si peu d'avis disponibles, base-toi sur les caractéristiques produit et la réputation de la marque
-- Sois objectif et factuel
+- globalScore : nombre décimal entre 0 et 10
+- confidence : "haute" si beaucoup d'avis web, "moyenne" si peu d'avis mais produit connu, "faible" si produit peu connu
+- Sois objectif et factuel, même avec des données limitées
 `;
 
   const completion = await groq.chat.completions.create({
