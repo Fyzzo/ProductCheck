@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import type { ProductData } from './scraper';
 import type { ReviewSource } from './reviews';
 
@@ -18,16 +18,13 @@ export async function analyzeProduct(
   product: ProductData,
   reviews: ReviewSource[]
 ): Promise<AnalysisResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY manquante dans les variables d\'environnement');
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY manquante dans les variables d\'environnement');
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const groq = new Groq({ apiKey });
 
   const reviewsText = reviews
-    .map(r =>
-      `- [${r.source}] Note: ${r.rating ?? 'N/A'}/5 | ${r.snippet}`
-    )
+    .map(r => `- [${r.source}] Note: ${r.rating ?? 'N/A'}/5 | ${r.snippet}`)
     .join('\n');
 
   const prompt = `Tu es un expert en analyse de produits et d'avis consommateurs. Analyse ce produit et ses avis.
@@ -64,15 +61,19 @@ Règles :
 - Sois objectif et factuel
 `;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().trim();
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.3,
+    max_tokens: 1024,
+  });
 
-  // Strip potential markdown code blocks
+  const text = completion.choices[0]?.message?.content?.trim() ?? '';
   const jsonText = text.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
 
   try {
     return JSON.parse(jsonText) as AnalysisResult;
   } catch {
-    throw new Error(`Réponse Gemini invalide : ${text.substring(0, 200)}`);
+    throw new Error(`Réponse Groq invalide : ${text.substring(0, 200)}`);
   }
 }
